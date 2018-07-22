@@ -227,13 +227,13 @@ namespace wpCloud\StatelessMedia {
           )));
 
           /* Make Media Public READ for all on success */
-          if (is_object($media)) {
-            $acl = new \wpCloud\StatelessMedia\Google_Client\Google_Service_Storage_ObjectAccessControl();
-            $acl->setEntity('allUsers');
-            $acl->setRole('READER');
-
-            $this->service->objectAccessControls->insert($this->bucket, $name, $acl);
-          }
+          // if (is_object($media)) {
+          //   $acl = new \wpCloud\StatelessMedia\Google_Client\Google_Service_Storage_ObjectAccessControl();
+          //   $acl->setEntity('allUsers');
+          //   $acl->setRole('READER');
+          //   do_action('sm:sync::acl::insert', $acl, $media, $args);
+          //   $this->service->objectAccessControls->insert($this->bucket, $name, $acl);
+          // }
 
         } catch( Exception $e ) {
           return new WP_Error( 'sm_error', $e->getMessage() );
@@ -261,12 +261,34 @@ namespace wpCloud\StatelessMedia {
           if ( !file_exists( $_dir = dirname( $save_path ) ) ) {
             wp_mkdir_p( $_dir );
           }
-          return $this->client->getHttpClient()->get($media->getMediaLink(), ['save_to' => $save_path] )->getStatusCode();
+          return $this->client->getHttpClient()->get($this->sign_media_link($media), ['save_to' => $save_path] )->getStatusCode();
         }
 
         return $media;
       }
 
+      /**
+       * 
+       * 
+       * 
+       */
+      public function sign_media_link($media, $time = 600){
+        $expiry = time() + $time;
+        $bucketName = $media->bucket;
+        $accessId = 'my_access_id';
+        $stringPolicy = "GET\n\n\n".$expiry."\n/".$bucketName."/".$media->name; // ".$media->contentType."
+        $pkeyid = openssl_get_privatekey($this->key_json['private_key']); 
+
+        if (openssl_sign( $stringPolicy, $signature, $pkeyid, 'sha256' )) {
+          $signature = urlencode( base64_encode( $signature ) );
+          return 'https://storage.googleapis.com/'.
+          $bucketName."/".$media->name.'?GoogleAccessId=stateless-stateless-test-1-143@stateless-test-1-102610.iam.gserviceaccount.com&Expires='.$expiry.'&Signature='.$signature;
+        }
+
+        return $media->getMediaLink();
+      }
+
+       
       /**
        * Check if media exists
        * @param $path
