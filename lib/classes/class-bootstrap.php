@@ -193,6 +193,7 @@ namespace wpCloud\StatelessMedia {
             if( $this->get( 'sm.mode' ) === 'cdn' || $this->get( 'sm.mode' ) === 'stateless' ) {
               add_filter( 'wp_get_attachment_image_attributes', array( $this, 'wp_get_attachment_image_attributes' ), 20, 3 );
               add_filter( 'wp_get_attachment_url', array( $this, 'wp_get_attachment_url' ), 20, 2 );
+              // add_filter( 'wp_get_attachment_image_src', array( $this, 'wp_get_attachment_image_src' ), 20, 2 );
               add_filter( 'attachment_url_to_postid', array( $this, 'attachment_url_to_postid' ), 20, 2 );
 
               if ( $this->get( 'sm.body_rewrite' ) == 'true' ) {
@@ -1117,9 +1118,27 @@ namespace wpCloud\StatelessMedia {
         if( is_array( $sm_cloud ) && !empty( $sm_cloud[ 'fileLink' ] ) ) {
           $_url = parse_url($sm_cloud[ 'fileLink' ]);
           $url = !isset($_url['scheme']) ? ( 'https:' . $sm_cloud[ 'fileLink' ] ) : $sm_cloud[ 'fileLink' ];
+          $url = $this->get_client()->sign_media_link($sm_cloud['name']);
           return apply_filters('wp_stateless_bucket_link', $url);
         }
+
         return $url;
+      }
+
+      /**
+       * 
+       * 
+       */
+      public function wp_get_attachment_image_src( $image, $attachment_id, $size, $icon ) {
+        $sm_cloud = get_post_meta( $post_id, 'sm_cloud', 1 );
+        if( is_array( $sm_cloud ) && !empty( $sm_cloud['sizes'][$size][ 'fileLink' ] ) ) {
+          $_url = parse_url($sm_cloud[ 'fileLink' ]);
+          $url = !isset($_url['scheme']) ? ( 'https:' . $sm_cloud[ 'fileLink' ] ) : $sm_cloud[ 'fileLink' ];
+          $url = $this->get_client()->sign_media_link($sm_cloud['name']);
+          return apply_filters('wp_stateless_bucket_link', $url);
+        }
+
+        return $image;
       }
 
       /**

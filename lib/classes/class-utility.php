@@ -206,7 +206,7 @@ namespace wpCloud\StatelessMedia {
           }
 
           /* Add Google Storage metadata to our attachment */
-          $fileLink = $bucketLink . '/' . ( !empty($media['name']) ? $media['name'] : $file );
+          $fileLink = ud_get_stateless_media()->get_client()->sign_media_link($media['name']);;
 
           $cloud_meta = array(
             'id' => $media[ 'id' ],
@@ -263,7 +263,7 @@ namespace wpCloud\StatelessMedia {
               /* Break if we have errors. */
               if( !is_wp_error( $media ) ) {
 
-                $fileLink = $bucketLink . '/' . (!empty($media['name']) ? $media['name'] : $file_path);
+                $fileLink = ud_get_stateless_media()->get_client()->sign_media_link($media['name']);;
 
                 // @note We don't add storageClass because it's same as parent...
                 $cloud_meta[ 'sizes' ][ $image_size ] = array(

@@ -273,6 +273,14 @@ namespace wpCloud\StatelessMedia {
        * 
        */
       public function sign_media_link($media, $time = 600){
+        if(is_string($media)){
+          try {
+            $media = $this->service->objects->get($this->bucket, $media);
+          } catch ( \Exception $e ) {
+            return false;
+          }
+        }
+        
         $expiry = time() + $time;
         $bucketName = $media->bucket;
         $accessId = 'my_access_id';
