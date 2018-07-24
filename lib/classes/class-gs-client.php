@@ -290,7 +290,7 @@ namespace wpCloud\StatelessMedia {
         if (openssl_sign( $stringPolicy, $signature, $pkeyid, 'sha256' )) {
           $signature = urlencode( base64_encode( $signature ) );
           return 'https://storage.googleapis.com/'.
-          $bucketName."/".$media->name.'?GoogleAccessId=stateless-stateless-test-1-143@stateless-test-1-102610.iam.gserviceaccount.com&Expires='.$expiry.'&Signature='.$signature;
+          $bucketName."/".$media->name.'?GoogleAccessId=' . $this->key_json['client_email'] . '&Expires='.$expiry.'&Signature='.$signature;
         }
 
         return $media->getMediaLink();
