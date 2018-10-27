@@ -942,7 +942,7 @@ namespace UsabilityDynamics\UD_API {
         $cache = true;
 
         $option = sanitize_key( 'ud_ping_' . sanitize_key( $this->slug ) );
-        $response = get_option( $option );
+        // $response = get_option( $option );
 
         if (
           false === $response ||
