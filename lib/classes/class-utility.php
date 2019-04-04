@@ -175,6 +175,7 @@ namespace wpCloud\StatelessMedia {
         $upload_dir = wp_upload_dir();
         $args = wp_parse_args($args, array(
           'no_thumb' => false,
+          'is_webp' => '', // expected value ".webp";
         ));
 
         /* Get metadata in case if method is called directly. */
@@ -208,7 +209,7 @@ namespace wpCloud\StatelessMedia {
           $fullsizepath = wp_normalize_path( get_attached_file( $attachment_id ) );
           // Make non-images uploadable.
           if( empty( $metadata['file'] ) && $attachment_id ) {
-            $file = str_replace( wp_normalize_path(trailingslashit( $upload_dir[ 'basedir' ] )), '', $fullsizepath );
+            $file = str_replace( wp_normalize_path(trailingslashit( $upload_dir[ 'basedir' ] )), '', $fullsizepath ) . $args['is_webp'];
             if(empty($metadata)){
               $metadata = array();
             }
@@ -218,7 +219,7 @@ namespace wpCloud\StatelessMedia {
             }
           }
 
-          $file = wp_normalize_path( !empty($metadata[ 'file' ])?$metadata[ 'file' ]:$file );
+          $file = wp_normalize_path( !empty($metadata[ 'file' ])?$metadata[ 'file' ]:$file ) . $args['is_webp'];
 
           $image_host = ud_get_stateless_media()->get_gs_host();
           $bucketLink = apply_filters('wp_stateless_bucket_link', $image_host);
@@ -245,7 +246,7 @@ namespace wpCloud\StatelessMedia {
             'absolutePath' => wp_normalize_path( get_attached_file( $attachment_id ) ),
             'cacheControl' => $_cacheControl = self::getCacheControl( $attachment_id, $metadata, null ),
             'contentDisposition' => $_contentDisposition = self::getContentDisposition( $attachment_id, $metadata, null ),
-            'mimeType' => get_post_mime_type( $attachment_id ),
+            'mimeType' => $args['is_webp'] ? 'image/webp' : get_post_mime_type( $attachment_id ),
             'metadata' => $_metadata
           ) ));
 
@@ -297,16 +298,16 @@ namespace wpCloud\StatelessMedia {
 
             foreach( (array) $metadata[ 'sizes' ] as $image_size => $data ) {
 
-              $absolutePath = wp_normalize_path( $path . '/' . $data[ 'file' ] );
+              $absolutePath = wp_normalize_path( $path . '/' . $data[ 'file' ] ) . $args['is_webp'];
 
               /* Add 'image size' image */
               $media = $client->add_media( array(
                 'force' => $force,
-                'name' => $file_path = trim($mediaPath . '/' . $data[ 'file' ], '/'),
+                'name' => $file_path = trim($mediaPath . '/' . $data[ 'file' ], '/') . $args['is_webp'],
                 'absolutePath' => $absolutePath,
                 'cacheControl' => $_cacheControl,
                 'contentDisposition' => $_contentDisposition,
-                'mimeType' => $data[ 'mime-type' ],
+                'mimeType' => $args['is_webp'] ? 'image/webp' : $data[ 'mime-type' ],
                 'metadata' => array_merge( $_metadata, array(
                   'width' => $data['width'],
                   'height' => $data['height'],
@@ -345,7 +346,14 @@ namespace wpCloud\StatelessMedia {
             unlink($fullsizepath);
           }
 
-          update_post_meta( $attachment_id, 'sm_cloud', $cloud_meta );
+          if(!$args['is_webp']){
+            update_post_meta( $attachment_id, 'sm_cloud', $cloud_meta );
+          }
+          else{
+            $cloud_meta = get_post_meta( $attachment_id, 'sm_cloud', true);
+            $cloud_meta['is_webp'] = true;
+            update_post_meta( $attachment_id, 'sm_cloud', $cloud_meta );
+          }
 
           if($args['no_thumb'] == true){
             $stateless_synced_full_size = $attachment_id;

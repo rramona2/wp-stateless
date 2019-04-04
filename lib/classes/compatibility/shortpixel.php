@@ -134,8 +134,9 @@ namespace wpCloud\StatelessMedia {
                 }
 
                 $metadata = wp_get_attachment_metadata( $id );
-                ud_get_stateless_media()->add_media( $metadata, $id, true );
 
+                // Sync the webp to GCS
+                ud_get_stateless_media()->add_media( $metadata, $id, true, array('is_webp' => '.webp') );
                 $this->sync_backup_file($id, $metadata);
             }
 
